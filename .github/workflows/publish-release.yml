@@ -1,0 +1,48 @@
+on:
+  push:
+    tags:
+    - 'v[0-9]+\.[0-9]+\.[0-9]+' 
+
+name: Publish tricktool Release to Drafts
+
+jobs:
+  build:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+        #
+      - name: Get bare tag
+        id: baretag
+        run: echo "::set-output name=baretag::$(echo ${{ github.ref }} | cut -b 12-)"
+        #
+      - name: Checkout code
+        uses: actions/checkout@v2
+        #
+      - name: Build project
+        run: |
+          TAGVER=${{ steps.baretag.outputs.baretag }} make release
+        #
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release v${{ steps.baretag.outputs.baretag }} / ${{ steps.date.outputs.date }}
+          draft: true
+          prerelease: false
+        #
+      - name: Upload Release Binaries Tarball
+        id: upload-release-asset-bundle
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./OPATH/tricktool-${{ steps.baretag.outputs.baretag }}.tar.gz
+          asset_name: tricktool-binaries-${{ steps.baretag.outputs.baretag }}.tar.gz
+          asset_content_type: application/gzip
