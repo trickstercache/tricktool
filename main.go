@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
 const applicationName = "tricktool"
-const applicationVersion = "2.0.0"
+const applicationVersion = "2.0.1"
 
 func main() {
 
@@ -18,7 +20,11 @@ func main() {
 		Run:  upgradeConfig,
 	}
 
-	var rootCmd = &cobra.Command{Use: "tricktool"}
+	var rootCmd = &cobra.Command{Use: applicationName, Version: applicationVersion}
+
 	rootCmd.AddCommand(cmdUpgradeConfig)
-	rootCmd.Execute()
+	err := rootCmd.Execute()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
